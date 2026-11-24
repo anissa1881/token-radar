@@ -1,4 +1,4 @@
-// Token Radar's model, version radar-2: one snapshot of the protocol universe in, one ranked board out.
+// Token Radar's model, version radar-3: one snapshot of the protocol universe in, one ranked board out.
 //
 // The board ranks every pre-token protocol the house rules leave rankable: the 40-protocol watchlist
 // is the floor, and the early radar adds the pre-token protocols below it plus the ones above the
@@ -52,7 +52,7 @@ export class SnapshotError extends Error {
 }
 
 /** The model's version label: the dashboard names it and the rules quote it. */
-export const MODEL_VERSION = 'radar-2';
+export const MODEL_VERSION = 'radar-3';
 
 /** How many live-token protocols the Live token view carries, by market cap. */
 export const LIVE_ROWS = 24;
