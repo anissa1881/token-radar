@@ -1,36 +1,71 @@
-# token-radar
+# Token Radar
 
-[![make.fun · token-radar-01](https://make.fun/badge/token-radar-01.svg)](https://make.fun/bounty/token-radar-01?utm_source=github&utm_medium=readme&utm_campaign=token-radar-01)
-[![rank](https://make.fun/badge/token-radar-01/anissa1881/token-radar/rank.svg)](https://make.fun/bounty/token-radar-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=token-radar-01)
-[![reward](https://make.fun/badge/token-radar-01/anissa1881/token-radar/reward.svg)](https://make.fun/bounty/token-radar-01?utm_source=github&utm_medium=readme&utm_campaign=token-radar-01)
+The best token launch radar for the make.fun `token-radar-01` bounty: it reads
+the sealed DefiLlama snapshot, ranks every clean pre-token protocol by what
+its launch would be worth, and shows how to farm each one.
 
-Token Radar ranks the pre-token protocols of a sealed DefiLlama snapshot by what their token
-would be worth if the record stayed as it is, and shows a reader how to farm each one. The
-model is fitted, never asserted: a category's median market-cap-to-TVL among protocols whose
-token already trades (winsorized, shrunk toward the global median, bent by a size curve the
-data fits), times token odds read from how often peers of the same age and family record a
-token. Every term earns its place by lowering the held-out miss in both out-of-sample tests
-(leave-one-out and walk-forward); the ranges are 200 bootstrap refits. No protocol name is
-ever special-cased. Wrapped, staked and bridged products are set aside with their reasons
-instead of being ranked as launch candidates, and protocols whose token already trades are
-shown apart at the market's own value. Each row carries a farm verdict in dollars — a
-modelled drop minus the plan's own gas, against a T-bill — and a nine-step farm plan from its
-own category's playbook.
+## What it does
+
+`main.ts` (Node 22, standard library only) reads `input/snapshot.json`,
+fits the value and odds models fresh, writes the ranked board to
+`output/board.json`, the dashboard's data to `output/data.js`, and the
+dossier to `output/dossier.json` with the vendored make.fun library.
+
+## The model (radar-4)
+
+**Value.** `log10(market cap)` is fitted on the 95 priced peers that carry a
+listing date: a size curve in log TVL, a hinge that flattens the slope above
+$1B of TVL, the clipped 7-day TVL change, and a category effect shrunk with
+64 pseudo-observations. A term stays only when it cuts the median held-out
+miss in all four tests.
+
+| Test | Miss |
+| --- | --- |
+| Leave-one-out | x2.56 |
+| Walk-forward (earlier listings price later ones) | x2.48 |
+| Ten-fold | x2.85 |
+| Older-to-newer (before 2024 prices after) | x2.60 |
+| Flat median multiple, leave-one-out | x4.89 |
+
+**Token odds (survival).** A protocol that has run `a` years with no token
+lists one eventually with probability `(L - P(a)) / (1 - P(a))`, where
+`P(a) = L (1 - exp(-k a))` is the fitted cumulative listing curve
+(L = 0.85 eventual rate, k = 0.55 a year, maximum likelihood on the 645
+dated protocols). Size does not move the rate once age is known, and the
+category rates are confounded by youth (Risk Curators: median age 0.5y, one
+member aged 2y+ and it has a token), so the board uses the pooled hazard and
+says so. A richer logistic (age, size, category) scores Brier 0.191
+in-sample / 0.206 ten-fold; the survival curve alone scores 0.224.
+
+**Implied value.** `TVL x fitted multiple x token odds`. Ranges are the
+leave-one-out residual quartiles, so P25-P75 holds about 50% of real caps
+and P10-P90 about 80%.
+
+**Farm verdicts.** A row farms when the modelled drop, net of gas, beats
+both a 4% T-bill on the same deposit and $25 an hour of hands-on work. The
+plan is sized to the smallest deposit that turns the row FARM. Drop is 7%
+of implied value times the deposit's share of TVL.
+
+## The board
+
+198 rows: the 40-protocol watchlist, 138 early protocols below the $50M
+floor, and 20 above the floor the house list leaves out. The 416 protocols
+that already record a token and the 144 the house rules leave out are shown
+in their own views, with the reason each one is set aside. Every row
+carries a 10-step farm plan with costs and times.
 
 ## Run it
 
 ```sh
-mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts --input <path to snapshot.json>
+mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts --input /path/to/snapshot.json
+node /path/to/kit/cli/makefun.mjs check --kit /path/to/kit --repo .
 ```
 
-The program writes `out/board.json` (197 rows: the 40-protocol watchlist plus the 138
-rankable pre-token protocols below the floor and 19 above it that the list leaves out),
-`out/data.js`, `out/dashboard/`, `out/screenshots/` and `out/dossier.json`. Open
-`out/dashboard/index.html` in a browser to use the dashboard: search, filter by category,
-chain or verdict, sort every column, open any row for its model breakdown, farm verdict and
-farm plan, and switch between the pre-token board, the live-token view and the set-aside
-view. CSV and JSON export are on the board.
+The program is deterministic: two runs from different working directories
+write byte-identical output. Open `out/dashboard/index.html` in a browser
+for the three screenshots: the board, a protocol's detail view, and a
+filtered view.
 
----
+## License
 
-<sub>Entered on [make.fun](https://make.fun/?ref=anissa1881&utm_source=github&utm_medium=readme&utm_campaign=token-radar-01) · AI agents build software for cash rewards</sub>
+MIT. See `LICENSE`.

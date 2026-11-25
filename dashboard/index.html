@@ -1,15 +1,79 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Token Radar — pre-token protocols ranked by implied value</title>
-<link rel="icon" href="data:,">
+<title>Token Radar — pre-token protocols, valued from their own record</title>
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
-<a class="skip" href="#board">Skip to the board</a>
-<main id="board" tabindex="-1" aria-busy="true"></main>
+<header class="top">
+  <div class="brand"><span class="dot"></span><h1>Token Radar</h1></div>
+  <div class="meta" id="meta">Snapshot 2026-11-14 &middot; DefiLlama protocol index &middot; radar-4 model</div>
+</header>
+<main>
+  <h2 id="boardTitle">40 watchlist protocols, ranked by implied value</h2>
+  <p class="lede">The watchlist is the floor: every protocol with at least $50M of TVL and no token on record. The early radar adds 138 pre-token protocols below that floor and 20 above it that the list leaves out. Implied value is a model, not a promise.</p>
+
+  <section class="kpis" id="kpis" aria-label="Model summary"></section>
+  <p class="formula">Implied value = TVL &times; fitted multiple (the value if a token launches) &times; token odds (from how long peers ran before recording one). Each coefficient is fitted on this snapshot and tested held-out.</p>
+
+  <section class="account" aria-label="Protocol accounting">
+    <div class="account-title">Protocol accounting &mdash; <span id="accountLine"></span></div>
+    <div class="bar" id="accountBar"></div>
+    <div class="legend" id="accountLegend"></div>
+    <div class="chips" id="checks"></div>
+  </section>
+
+  <section class="evidence" aria-label="Out-of-sample evidence">
+    <h3>Out-of-sample evidence</h3>
+    <p class="note">A term is kept only if it lowers the held-out miss in all four tests: leave-one-out, walk-forward (tokens listed earlier price those listed later), ten-fold, and older-to-newer. The page never says a token will launch.</p>
+    <div class="tables">
+      <div class="tablewrap"><h4>Value if a token launches &middot; typical miss, <span id="peerCount"></span> traded tokens</h4><div id="valueTable"></div></div>
+      <div class="tablewrap"><h4>Token odds &middot; Brier score (share called right), <span id="oddsPeerCount"></span> dated protocols</h4><div id="oddsTable"></div></div>
+      <div class="tablewrap"><h4>Is the printed range honest?</h4><div id="rangeTable"></div></div>
+    </div>
+  </section>
+
+  <section class="controls" aria-label="Board controls">
+    <div class="tiers" id="tiers" role="tablist"></div>
+    <div class="filters">
+      <label>Search <input id="q" type="search" placeholder="Search name, category or chain"></label>
+      <label>Category <select id="cat"></select></label>
+      <label>Chain <select id="chain"></select></label>
+      <label>Verdict <select id="verdict"><option value="">All verdicts</option><option>FARM</option><option>MARGINAL</option><option>SKIP</option></select></label>
+      <label>Sort <select id="sort"><option value="implied">Implied value</option><option value="farms">Best farms (net / hour)</option><option value="tvl">TVL</option><option value="net">Net of fees</option></select></label>
+    </div>
+    <div class="views">
+      <div class="viewtabs" id="views"></div>
+      <div class="plan">
+        <label>Drop share <input id="share" type="range" min="3.5" max="14" step="0.5" value="7"> <span id="shareVal">7.0%</span></label>
+        <label>Horizon <select id="horizon"><option value="4">4 weeks</option><option value="12" selected>12 weeks</option><option value="26">26 weeks</option></select></label>
+        <label>Deposit <select id="depMode"><option value="min" selected>Minimum that farms</option><option value="10000">$10,000 fixed</option></select></label>
+        <button id="reset" type="button">Reset</button>
+      </div>
+    </div>
+    <div class="export">
+      <span>Export</span>
+      <button id="csv" type="button">CSV</button>
+      <button id="json" type="button">JSON</button>
+      <span id="shown"></span>
+    </div>
+  </section>
+
+  <section class="boardwrap" aria-label="Board">
+    <p class="boardhint">Pre-token protocols, strongest implied value first. Select a row for its model, its farm verdict and its plan.</p>
+    <div id="board"></div>
+  </section>
+</main>
+
+<div class="modal" id="modal" hidden>
+  <div class="modalcard" role="dialog" aria-modal="true">
+    <button class="close" id="closeModal" type="button">Close</button>
+    <div id="detail"></div>
+  </div>
+</div>
+
 <script src="../data.js"></script>
 <script src="app.js"></script>
 </body>
