@@ -6,9 +6,12 @@
 //
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts --input <snapshot.json|dir>
 //
-// Inputs resolve from MAKEFUN_BOT_DIR (fallback: this file's directory) and
-// never from the working directory, so the grader may run it from anywhere.
-// Outputs go to MAKEFUN_OUTPUT_DIR (fallback /output, or --output).
+// The snapshot resolves from MAKEFUN_INPUT_DIR (default /input, the sealed
+// mount the grader provides) and never from the working directory, so the
+// grader may run it from anywhere. Repo files resolve from this file's
+// directory. Outputs go to MAKEFUN_OUTPUT_DIR (fallback /output, or --output).
+// (Do not look for the snapshot under the repo: the grader mounts it at
+// /input, and the repo carries no input/ directory.)
 
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -27,8 +30,7 @@ function flagValue(name: string, fallback: string): string {
   return fallback;
 }
 
-const botDir = process.env.MAKEFUN_BOT_DIR ?? here;
-const inputGiven = flagValue('input', join(botDir, 'input'));
+const inputGiven = flagValue('input', process.env.MAKEFUN_INPUT_DIR ?? '/input');
 const inputFile = inputGiven.endsWith('.json') ? inputGiven : join(inputGiven, 'snapshot.json');
 if (!existsSync(inputFile)) {
   process.stderr.write(`token radar: no snapshot at ${inputFile} (pass --input <snapshot.json|directory>)\n`);
